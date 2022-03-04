@@ -3,6 +3,8 @@ const express = require('express')
 const app = express()
 const PORT = 3001
 
+app.use(express.json())
+
 let contacts = [
     { 
       "id": 1,
@@ -45,6 +47,17 @@ app.get('/api/persons/:id', (request, response) => {
     } else {
         response.status(404).end()
     }
+})
+
+app.post('/api/persons', (request, response) => {
+    const contact = {
+        id: (Math.floor(Math.random() * 10) + 1) * (Math.floor(Math.random() * 15) + 1),
+        name: request.body.name,
+        number: request.body.number
+    }
+
+    contacts.push(contact)
+    response.json(contact)
 })
 
 app.delete('/api/persons/:id', (request, response) => {
