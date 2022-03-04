@@ -50,14 +50,29 @@ app.get('/api/persons/:id', (request, response) => {
 })
 
 app.post('/api/persons', (request, response) => {
-    const contact = {
-        id: (Math.floor(Math.random() * 10) + 1) * (Math.floor(Math.random() * 15) + 1),
-        name: request.body.name,
-        number: request.body.number
-    }
+    const name = request.body.name
+    const number = request.body.number
 
-    contacts.push(contact)
-    response.json(contact)
+    if (name && number) {
+        if (contacts.find(contact => contact.name === name)) {
+            return response.status(409).json({
+                error: 'The name must be unique'
+            })
+        }
+
+        const contact = {
+            id: (Math.floor(Math.random() * 10) + 1) * (Math.floor(Math.random() * 15) + 1),
+            name: name,
+            number: number
+        }
+
+        contacts.push(contact)
+        response.json(contact)
+    } else {
+        return response.status(400).json({
+            error: 'The name or number is missing'
+        })
+    }
 })
 
 app.delete('/api/persons/:id', (request, response) => {
