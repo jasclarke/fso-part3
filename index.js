@@ -1,11 +1,21 @@
 const { request, response } = require('express')
 const express = require('express')
+const { json } = require('express/lib/response')
 const morgan = require('morgan')
 const app = express()
 const PORT = 3001
 
 app.use(express.json())
-app.use(morgan('tiny'))
+app.use(morgan((tokens, request, response) => {
+    return [
+        tokens.method(request, response),
+        tokens.url(request, response),
+        tokens.status(request, response),
+        tokens.res(request, response, 'content-length'), '-',
+        tokens['response-time'](request, response), 'ms',
+        JSON.stringify(request.body)
+    ].join(' ')
+}))
 
 let contacts = [
     { 
