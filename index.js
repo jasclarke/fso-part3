@@ -43,20 +43,19 @@ app.post('/api/persons', (request, response) => {
     const number = request.body.number
 
     if (name && number) {
-        if (contacts.find(contact => contact.name === name)) {
+        /*if (contacts.find(contact => contact.name === name)) {
             return response.status(409).json({
                 error: 'The name must be unique'
             })
-        }
+        }*/
 
-        const contact = {
-            id: (Math.floor(Math.random() * 10) + 1) * (Math.floor(Math.random() * 15) + 1),
+        const contact = new Contact({
             name: name,
             number: number
-        }
+        })
 
-        contacts.push(contact)
-        response.json(contact)
+        contact.save()
+            .then(contact => response.json(contact))
     } else {
         return response.status(400).json({
             error: 'The name or number is missing'
