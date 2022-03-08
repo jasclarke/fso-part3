@@ -1,10 +1,14 @@
+require('dotenv').config()
+
 const { request, response } = require('express')
 const express = require('express')
 const { json } = require('express/lib/response')
 const morgan = require('morgan')
 const cors = require('cors')
+const mongoose = require('mongoose')
+const Contact = require('./models/contact')
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 
 morgan.token('post-request', (request) => {
     return JSON.stringify(request.body)
@@ -17,29 +21,6 @@ app.use(morgan(
     ':method :url :status :res[content-length] - :response-time ms :post-request'
 ))
 
-let contacts = [
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
 app.get('/info', (request, response) => {
     response.send(
         `<p>Phonebook has info for ${contacts.length} people</p><p>${new Date()}</p`
@@ -47,18 +28,14 @@ app.get('/info', (request, response) => {
 })
 
 app.get('/api/persons', (request, response) => {
-    response.json(contacts)
+    Contact.find({})
+        .then(contacts => response.json(contacts))
 })
 
 app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const contact = contacts.find(contact => contact.id === id)
-
-    if (contact) {
-        response.json(contact)
-    } else {
-        response.status(404).end()
-    }
+    Contact.findById(request.params.id)
+        .then(contact => response.json(contact))
+        //response.status(404).end()
 })
 
 app.post('/api/persons', (request, response) => {
