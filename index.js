@@ -21,6 +21,12 @@ const errorHandler = (error, request, response, next) => {
         return response.status(400).send({error: 'Malformatted ID'})
     }
 
+    if (error.name === 'Not Found') {
+        console.log('test');
+        return response.status(404)
+            .send({error: 'The contact requested for this action does not exist'})
+    }
+
     next(error)
 }
 
@@ -35,28 +41,33 @@ app.use(morgan(
     ':method :url :status :res[content-length] - :response-time ms :post-request'
 ))
 
-app.get('/info', (request, response) => {
-    response.send(
-        `<p>Phonebook has info for ${contacts.length} people</p><p>${new Date()}</p`
-    )
+app.get('/info', (request, response, next) => {
+    Contact.find({})
+        .then(contacts => {
+            response.send(
+                `<p>Phonebook has info for ${contacts.length} people</p><p>${new Date()}</p`
+            )
+        })
+        .catch(error => next(error))
 })
 
-app.get('/api/persons', (request, response) => {
+app.get('/api/persons', (request, response, next) => {
     Contact.find({})
         .then(contacts => response.json(contacts))
+        .catch(error => next(error))
 })
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
     Contact.findById(request.params.id)
-        .then(contact => response.json(contact))
-        //response.status(404).end()
+        .then(contact => contact ? response.json(contact) : next({name: 'Not Found'}))
+        .catch(error => next(error))
 })
 
 app.put('/api/persons/:id', (request, response, next) => {
     const contact = {number: request.body.number}
 
     Contact.findByIdAndUpdate(request.params.id, contact, {new: true})
-        .then(contact => response.json(contact))
+        .then(contact => contact ? response.json(contact) : next({name: 'Not Found'}))
         .catch(error => next(error))
 })
 
