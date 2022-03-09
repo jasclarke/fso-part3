@@ -10,6 +10,20 @@ const Contact = require('./models/contact')
 const app = express()
 const PORT = process.env.PORT
 
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+}
+
+const errorHandler = (error, request, response, next) => {
+    console.log(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({error: 'Malformatted ID'})
+    }
+
+    next(error)
+}
+
 morgan.token('post-request', (request) => {
     return JSON.stringify(request.body)
 })
@@ -63,13 +77,14 @@ app.post('/api/persons', (request, response) => {
     }
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    contacts = contacts.filter(contact => contact.id !== id)
-
-    response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+    Contact.findByIdAndRemove(request.params.id)
+        .then(result => response.status(204).end())
+        .catch(error => next(error))
 })
 
+app.use(unknownEndpoint)
+app.use(errorHandler)
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 })
