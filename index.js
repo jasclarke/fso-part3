@@ -15,7 +15,7 @@ const unknownEndpoint = (request, response) => {
 }
 
 const errorHandler = (error, request, response, next) => {
-    console.log(error.message)
+    console.log(error)
 
     if (error.name === 'CastError') {
         return response.status(400).send({error: 'Malformatted ID'})
@@ -25,6 +25,14 @@ const errorHandler = (error, request, response, next) => {
         console.log('test');
         return response.status(404)
             .send({error: 'The contact requested for this action does not exist'})
+    }
+
+    if (error.name === 'ValidationError') {
+        return response.status(400).json({error: error.message})
+    }
+
+    if (error.name === 'MongoServerError' && error.code === 11000) {
+        return response.status(400).json({error: 'Duplicate name not allowed'})
     }
 
     next(error)
@@ -65,28 +73,26 @@ app.get('/api/persons/:id', (request, response, next) => {
 
 app.put('/api/persons/:id', (request, response, next) => {
     const contact = {number: request.body.number}
+    const options = {
+        new: true,
+        runValidators: true,
+        context: 'query'
+    }
 
-    Contact.findByIdAndUpdate(request.params.id, contact, {new: true})
+    Contact.findByIdAndUpdate(request.params.id, contact, options)
         .then(contact => contact ? response.json(contact) : next({name: 'Not Found'}))
         .catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
-    const name = request.body.name
-    const number = request.body.number
+app.post('/api/persons', (request, response, next) => {
+    const contact = new Contact({
+        name: request.body.name,
+        number: request.body.number
+    })
 
-    if (name && number) {
-        const contact = new Contact({
-            name: name,
-            number: number
-        })
-
-        contact.save().then(contact => response.json(contact))
-    } else {
-        return response.status(400).json({
-            error: 'The name or number is missing'
-        })
-    }
+    contact.save()
+        .then(contact => response.json(contact))
+        .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
