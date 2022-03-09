@@ -52,24 +52,25 @@ app.get('/api/persons/:id', (request, response) => {
         //response.status(404).end()
 })
 
+app.put('/api/persons/:id', (request, response, next) => {
+    const contact = {number: request.body.number}
+
+    Contact.findByIdAndUpdate(request.params.id, contact, {new: true})
+        .then(contact => response.json(contact))
+        .catch(error => next(error))
+})
+
 app.post('/api/persons', (request, response) => {
     const name = request.body.name
     const number = request.body.number
 
     if (name && number) {
-        /*if (contacts.find(contact => contact.name === name)) {
-            return response.status(409).json({
-                error: 'The name must be unique'
-            })
-        }*/
-
         const contact = new Contact({
             name: name,
             number: number
         })
 
-        contact.save()
-            .then(contact => response.json(contact))
+        contact.save().then(contact => response.json(contact))
     } else {
         return response.status(400).json({
             error: 'The name or number is missing'
