@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 mongoose.connect(process.env.MONGODB_URI)
-    .then(result => console.log('Connected to MongoDB'))
+    .then(() => console.log('Connected to MongoDB'))
     .catch(error => console.log(`Unable to connect to MongoDB: ${error.message}`))
 
 const contactSchema = new mongoose.Schema({
